@@ -1,0 +1,45 @@
+<?php
+/** @var \IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Category\Tab\PriceRules $block */
+$priceRules = $block->getPriceRules();
+?>
+<div class="price-rules-wrapper">
+    <?php if (count($priceRules) > 0): ?>
+        <div class="price-rules-container">
+            <table class="admin__table-secondary">
+                <thead>
+                    <tr>
+                        <th><?= $block->escapeHtml(__('Rule Name')) ?></th>
+                        <th><?= $block->escapeHtml(__('Description')) ?></th>
+                        <th><?= $block->escapeHtml(__('Start Date')) ?></th>
+                        <th><?= $block->escapeHtml(__('End Date')) ?></th>
+                        <th><?= $block->escapeHtml(__('Discount Amount')) ?></th>
+                        <th><?= $block->escapeHtml(__('Status')) ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($priceRules as $rule): ?>
+                        <tr>
+                            <td><?= $block->escapeHtml($rule->getName()) ?></td>
+                            <td><?= $block->escapeHtml($rule->getDescription()) ?></td>
+                            <td><?= $block->escapeHtml($rule->getFromDate()) ?></td>
+                            <td><?= $block->escapeHtml($rule->getToDate() ?: __('No End Date')) ?></td>
+                            <td>
+                                <?php
+                                $discountAmount = $rule->getDiscountAmount();
+                                echo $block->escapeHtml($rule->getSimpleAction() === 'by_percent'
+                                    ? $discountAmount . '%'
+                                    : $block->getPriceHelper()->currency($discountAmount, true, false));
+                                ?>
+                            </td>
+                            <td><?= $block->escapeHtml($rule->getIsActive() ? __('Active') : __('Inactive')) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php else: ?>
+        <div class="message info empty">
+            <span><?= $block->escapeHtml(__('No catalog price rules are applied to this category.')) ?></span>
+        </div>
+    <?php endif; ?>
+</div>

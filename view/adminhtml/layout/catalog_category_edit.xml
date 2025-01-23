@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="catalog_category_edit"/>
+    <body>
+        <referenceContainer name="content">
+            <referenceBlock name="category.edit.tab.container">
+                <block class="IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Category\Tab\PriceRules"
+                       name="category.edit.tab.pricerules"
+                       template="IDangerous_PriceRulesShowInCategory::category/tab/price_rules.phtml">
+                    <arguments>
+                        <argument name="tab_label" xsi:type="string">Price Rules</argument>
+                    </arguments>
+                </block>
+            </referenceBlock>
+        </referenceContainer>
+    </body>
+</page>
