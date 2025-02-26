@@ -115,4 +115,108 @@ class PriceRules extends Template
     {
         return $this->priceHelper;
     }
+
+    /**
+     * Format rule conditions for display
+     *
+     * @param \Magento\CatalogRule\Model\Rule $rule
+     * @return array
+     */
+    public function getFormattedConditions($rule)
+    {
+        $conditions = $rule->getConditions()->asArray();
+        return $this->formatConditionsArray($conditions);
+    }
+
+    /**
+     * Recursively format conditions array
+     *
+     * @param array $conditions
+     * @return array
+     */
+    protected function formatConditionsArray($conditions)
+    {
+        $formatted = [];
+
+        if (isset($conditions['conditions']) && is_array($conditions['conditions'])) {
+            foreach ($conditions['conditions'] as $condition) {
+                $conditionText = '';
+
+                if (isset($condition['attribute'])) {
+                    $conditionText = $this->getAttributeLabel($condition['attribute']) . ' ';
+                    $conditionText .= $this->getOperatorLabel($condition['operator']) . ' ';
+                    $conditionText .= $this->formatValue($condition);
+                }
+
+                if (!empty($conditionText)) {
+                    $formatted[] = $conditionText;
+                }
+
+                if (!empty($condition['conditions'])) {
+                    $childConditions = $this->formatConditionsArray($condition);
+                    $formatted = array_merge($formatted, $childConditions);
+                }
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Get human readable label for attribute
+     *
+     * @param string $attribute
+     * @return string
+     */
+    protected function getAttributeLabel($attribute)
+    {
+        $labels = [
+            'category_ids' => __('Category'),
+            'attribute_set_id' => __('Attribute Set'),
+            'price' => __('Price'),
+            'special_price' => __('Special Price'),
+            // Add more attribute labels as needed
+        ];
+
+        return isset($labels[$attribute]) ? $labels[$attribute] : __(ucwords(str_replace('_', ' ', $attribute)));
+    }
+
+    /**
+     * Get human readable label for operator
+     *
+     * @param string $operator
+     * @return string
+     */
+    protected function getOperatorLabel($operator)
+    {
+        $labels = [
+            '==' => __('is'),
+            '!=' => __('is not'),
+            '>=' => __('equals or greater than'),
+            '<=' => __('equals or less than'),
+            '>' => __('greater than'),
+            '<' => __('less than'),
+            '{}' => __('contains'),
+            '!{}' => __('does not contain'),
+            '()' => __('is one of'),
+            '!()' => __('is not one of'),
+        ];
+
+        return isset($labels[$operator]) ? $labels[$operator] : $operator;
+    }
+
+    /**
+     * Format condition value for display
+     *
+     * @param array $condition
+     * @return string
+     */
+    protected function formatValue($condition)
+    {
+        if ($condition['attribute'] == 'category_ids') {
+            return implode(', ', explode(',', $condition['value']));
+        }
+
+        return $condition['value'];
+    }
 }

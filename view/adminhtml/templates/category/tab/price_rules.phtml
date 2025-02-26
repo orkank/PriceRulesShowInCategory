@@ -5,37 +5,57 @@ $priceRules = $block->getPriceRules();
 <div class="price-rules-wrapper">
     <?php if (count($priceRules) > 0): ?>
         <div class="price-rules-container">
-            <table class="admin__table-secondary">
-                <thead>
-                    <tr>
-                        <th><?= $block->escapeHtml(__('Rule Name')) ?></th>
-                        <th><?= $block->escapeHtml(__('Description')) ?></th>
-                        <th><?= $block->escapeHtml(__('Start Date')) ?></th>
-                        <th><?= $block->escapeHtml(__('End Date')) ?></th>
-                        <th><?= $block->escapeHtml(__('Discount Amount')) ?></th>
-                        <th><?= $block->escapeHtml(__('Status')) ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($priceRules as $rule): ?>
-                        <tr>
-                            <td><?= $block->escapeHtml($rule->getName()) ?></td>
-                            <td><?= $block->escapeHtml($rule->getDescription()) ?></td>
-                            <td><?= $block->escapeHtml($rule->getFromDate()) ?></td>
-                            <td><?= $block->escapeHtml($rule->getToDate() ?: __('No End Date')) ?></td>
-                            <td>
-                                <?php
-                                $discountAmount = $rule->getDiscountAmount();
-                                echo $block->escapeHtml($rule->getSimpleAction() === 'by_percent'
-                                    ? $discountAmount . '%'
-                                    : $block->getPriceHelper()->currency($discountAmount, true, false));
-                                ?>
-                            </td>
-                            <td><?= $block->escapeHtml($rule->getIsActive() ? __('Active') : __('Inactive')) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <?php foreach ($priceRules as $rule): ?>
+                <div class="price-rule-item">
+                    <h3><?= $block->escapeHtml($rule->getName()) ?></h3>
+                    <table class="admin__table-secondary">
+                        <tbody>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Description')) ?></th>
+                                <td><?= $block->escapeHtml($rule->getDescription()) ?></td>
+                            </tr>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Start Date')) ?></th>
+                                <td><?= $block->escapeHtml($rule->getFromDate()) ?></td>
+                            </tr>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('End Date')) ?></th>
+                                <td><?= $block->escapeHtml($rule->getToDate() ?: __('No End Date')) ?></td>
+                            </tr>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Discount Amount')) ?></th>
+                                <td>
+                                    <?php
+                                    $discountAmount = $rule->getDiscountAmount();
+                                    echo $block->escapeHtml($rule->getSimpleAction() === 'by_percent'
+                                        ? $discountAmount . '%'
+                                        : $block->getPriceHelper()->currency($discountAmount, true, false));
+                                    ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Status')) ?></th>
+                                <td><?= $block->escapeHtml($rule->getIsActive() ? __('Active') : __('Inactive')) ?></td>
+                            </tr>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Conditions')) ?></th>
+                                <td>
+                                    <?php $conditions = $block->getFormattedConditions($rule); ?>
+                                    <?php if (!empty($conditions)): ?>
+                                        <ul class="price-rule-conditions">
+                                            <?php foreach ($conditions as $condition): ?>
+                                                <li><?= $block->escapeHtml($condition) ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <?= $block->escapeHtml(__('No conditions specified')) ?>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endforeach; ?>
         </div>
     <?php else: ?>
         <div class="message info empty">
@@ -43,3 +63,21 @@ $priceRules = $block->getPriceRules();
         </div>
     <?php endif; ?>
 </div>
+
+<style>
+.price-rules-wrapper .price-rule-item {
+    margin-bottom: 2rem;
+}
+.price-rules-wrapper .price-rule-item h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #cccccc;
+}
+.price-rules-wrapper .price-rule-conditions {
+    margin: 0;
+    padding-left: 2rem;
+}
+.price-rules-wrapper .price-rule-conditions li {
+    margin-bottom: 0.5rem;
+}
+</style>

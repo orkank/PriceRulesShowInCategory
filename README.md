@@ -6,14 +6,22 @@ This module adds a new tab in the Magento 2 admin category edit page that displa
 
 - Displays a new "Price Rules" tab in category edit page
 - Shows all active catalog price rules that affect the current category
-- Displays rule details including:
+- Displays comprehensive rule details including:
   - Rule Name
   - Description
   - Start Date
   - End Date
   - Discount Amount
   - Status
-- Supports multiple languages (includes Turkish translations)
+  - All Rule Conditions in human-readable format
+- Supports multiple languages:
+  - English (default)
+  - Turkish (tr_TR)
+- Human-readable condition display showing:
+  - Attribute names in user-friendly format
+  - Operator descriptions in plain language
+  - Formatted values for better readability
+  - Nested conditions support
 
 ## Requirements
 
@@ -48,13 +56,22 @@ php bin/magento cache:clean
 2. Navigate to Catalog > Categories
 3. Select a category to edit
 4. Look for the "Price Rules" tab
-5. The tab will display all catalog price rules that affect the selected category
+5. The tab will display all catalog price rules that affect the selected category, including:
+   - Basic rule information
+   - Complete list of conditions in human-readable format
+   - Status and timing information
 
 ## Languages
 
 The module includes translations for:
 - English (default)
 - Turkish (tr_TR)
+
+To update translations after making changes:
+```bash
+php bin/magento setup:static-content:deploy tr_TR -f
+php bin/magento cache:clean
+```
 
 ## License
 
