@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <fieldset name="price-rules" sortOrder="200">
+        <settings>
+            <collapsible>true</collapsible>
+            <label translate="true">Price Rules</label>
+        </settings>
+        <htmlContent name="price_rules_content">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="additionalClasses" xsi:type="string">price-rules-content</item>
+                </item>
+            </argument>
+            <settings>
+                <wrapper>true</wrapper>
+            </settings>
+            <block class="IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Product\Tab\PriceRules" name="product_price_rules_tab">
+                <arguments>
+                    <argument name="template" xsi:type="string">IDangerous_PriceRulesShowInCategory::product/tab/price_rules.phtml</argument>
+                </arguments>
+            </block>
+        </htmlContent>
+    </fieldset>
+</form>

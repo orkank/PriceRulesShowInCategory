@@ -1,5 +1,5 @@
 <?php
-/** @var \IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Category\Tab\PriceRules $block */
+/** @var \IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Product\Tab\PriceRules $block */
 $priceRules = $block->getPriceRules();
 ?>
 <div class="price-rules-wrapper">
@@ -70,7 +70,7 @@ $priceRules = $block->getPriceRules();
         </div>
     <?php else: ?>
         <div class="message info empty">
-            <span><?= $block->escapeHtml(__('No catalog price rules are applied to this category.')) ?></span>
+            <span><?= $block->escapeHtml(__('No catalog price rules are applied to this product.')) ?></span>
         </div>
     <?php endif; ?>
 </div>

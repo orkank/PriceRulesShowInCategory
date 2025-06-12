@@ -1,11 +1,12 @@
 <?php
-namespace IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Category\Tab;
+namespace IDangerous\PriceRulesShowInCategory\Block\Adminhtml\Product\Tab;
 
 use Magento\Backend\Block\Template;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Registry;
 use Magento\CatalogRule\Model\ResourceModel\Rule\CollectionFactory;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\CategoryFactory;
 
 class PriceRules extends Template
@@ -13,7 +14,7 @@ class PriceRules extends Template
     /**
      * @var string
      */
-    protected $_template = 'IDangerous_PriceRulesShowInCategory::category/tab/price_rules.phtml';
+    protected $_template = 'IDangerous_PriceRulesShowInCategory::product/tab/price_rules.phtml';
 
     /**
      * @var Registry
@@ -59,11 +60,11 @@ class PriceRules extends Template
     }
 
     /**
-     * @return \Magento\Catalog\Model\Category
+     * @return Product
      */
-    public function getCategory()
+    public function getProduct()
     {
-        return $this->coreRegistry->registry('category');
+        return $this->coreRegistry->registry('product');
     }
 
     /**
@@ -71,14 +72,18 @@ class PriceRules extends Template
      */
     public function getPriceRules()
     {
-        $categoryId = $this->getCategory()->getId();
+        $product = $this->getProduct();
+        if (!$product || !$product->getId()) {
+            return [];
+        }
+
         $collection = $this->ruleCollectionFactory->create();
         $collection->addFieldToFilter('is_active', 1);
 
         $rules = [];
         foreach ($collection as $rule) {
             $conditions = $rule->getConditions()->asArray();
-            if ($this->checkCategoryInConditions($conditions, $categoryId)) {
+            if ($this->checkProductMatchesConditions($conditions, $product)) {
                 $rules[] = $rule;
             }
         }
@@ -88,24 +93,23 @@ class PriceRules extends Template
 
     /**
      * @param array $conditions
-     * @param int $categoryId
+     * @param Product $product
      * @return bool
      */
-    protected function checkCategoryInConditions($conditions, $categoryId)
+    protected function checkProductMatchesConditions($conditions, $product)
     {
         if (empty($conditions)) {
-            return false;
+            return true; // No conditions means rule applies to all products
         }
 
         if (isset($conditions['conditions'])) {
             foreach ($conditions['conditions'] as $condition) {
-                if ($condition['attribute'] == 'category_ids'
-                    && in_array($categoryId, explode(',', $condition['value']))) {
+                if ($this->evaluateCondition($condition, $product)) {
                     return true;
                 }
 
                 if (!empty($condition['conditions'])) {
-                    if ($this->checkCategoryInConditions($condition, $categoryId)) {
+                    if ($this->checkProductMatchesConditions($condition, $product)) {
                         return true;
                     }
                 }
@@ -113,6 +117,84 @@ class PriceRules extends Template
         }
 
         return false;
+    }
+
+    /**
+     * Evaluate a single condition against the product
+     *
+     * @param array $condition
+     * @param Product $product
+     * @return bool
+     */
+    protected function evaluateCondition($condition, $product)
+    {
+        if (!isset($condition['attribute']) || !isset($condition['operator'])) {
+            return false;
+        }
+
+        $attribute = $condition['attribute'];
+        $operator = $condition['operator'];
+        $value = isset($condition['value']) ? $condition['value'] : '';
+
+        // Get product attribute value
+        $productValue = $this->getProductAttributeValue($product, $attribute);
+
+        // Evaluate based on operator
+        switch ($operator) {
+            case '==':
+                return $productValue == $value;
+            case '!=':
+                return $productValue != $value;
+            case '>=':
+                return (float)$productValue >= (float)$value;
+            case '<=':
+                return (float)$productValue <= (float)$value;
+            case '>':
+                return (float)$productValue > (float)$value;
+            case '<':
+                return (float)$productValue < (float)$value;
+            case '{}':
+                return strpos($productValue, $value) !== false;
+            case '!{}':
+                return strpos($productValue, $value) === false;
+            case '()':
+                $values = explode(',', $value);
+                return in_array($productValue, $values);
+            case '!()':
+                $values = explode(',', $value);
+                return !in_array($productValue, $values);
+        }
+
+        return false;
+    }
+
+    /**
+     * Get product attribute value
+     *
+     * @param Product $product
+     * @param string $attribute
+     * @return mixed
+     */
+    protected function getProductAttributeValue($product, $attribute)
+    {
+        switch ($attribute) {
+            case 'category_ids':
+                return implode(',', $product->getCategoryIds());
+            case 'price':
+                return $product->getPrice();
+            case 'special_price':
+                return $product->getSpecialPrice();
+            case 'attribute_set_id':
+                return $product->getAttributeSetId();
+            case 'sku':
+                return $product->getSku();
+            case 'status':
+                return $product->getStatus();
+            case 'visibility':
+                return $product->getVisibility();
+            default:
+                return $product->getData($attribute);
+        }
     }
 
     /**
@@ -184,6 +266,9 @@ class PriceRules extends Template
             'attribute_set_id' => __('Attribute Set'),
             'price' => __('Price'),
             'special_price' => __('Special Price'),
+            'sku' => __('SKU'),
+            'status' => __('Status'),
+            'visibility' => __('Visibility'),
             // Add more attribute labels as needed
         ];
 
