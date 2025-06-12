@@ -103,16 +103,45 @@ class PriceRules extends Template
         }
 
         if (isset($conditions['conditions'])) {
-            foreach ($conditions['conditions'] as $condition) {
-                if ($this->evaluateCondition($condition, $product)) {
-                    return true;
-                }
+            // Default aggregator is usually 'all' (AND logic)
+            $aggregator = isset($conditions['aggregator']) ? $conditions['aggregator'] : 'all';
 
-                if (!empty($condition['conditions'])) {
-                    if ($this->checkProductMatchesConditions($condition, $product)) {
-                        return true;
+            if ($aggregator === 'all') {
+                // ALL conditions must be true (AND logic)
+                foreach ($conditions['conditions'] as $condition) {
+                    $conditionResult = false;
+
+                    if (!empty($condition['conditions'])) {
+                        // Nested conditions
+                        $conditionResult = $this->checkProductMatchesConditions($condition, $product);
+                    } else {
+                        // Single condition
+                        $conditionResult = $this->evaluateCondition($condition, $product);
+                    }
+
+                    if (!$conditionResult) {
+                        return false; // If any condition fails, rule doesn't apply
                     }
                 }
+                return true; // All conditions passed
+            } else {
+                // ANY condition must be true (OR logic)
+                foreach ($conditions['conditions'] as $condition) {
+                    $conditionResult = false;
+
+                    if (!empty($condition['conditions'])) {
+                        // Nested conditions
+                        $conditionResult = $this->checkProductMatchesConditions($condition, $product);
+                    } else {
+                        // Single condition
+                        $conditionResult = $this->evaluateCondition($condition, $product);
+                    }
+
+                    if ($conditionResult) {
+                        return true; // If any condition passes, rule applies
+                    }
+                }
+                return false; // No condition passed
             }
         }
 
@@ -135,6 +164,11 @@ class PriceRules extends Template
         $attribute = $condition['attribute'];
         $operator = $condition['operator'];
         $value = isset($condition['value']) ? $condition['value'] : '';
+
+        // Special handling for category_ids attribute
+        if ($attribute === 'category_ids') {
+            return $this->evaluateCategoryCondition($product, $operator, $value);
+        }
 
         // Get product attribute value
         $productValue = $this->getProductAttributeValue($product, $attribute);
@@ -163,6 +197,78 @@ class PriceRules extends Template
             case '!()':
                 $values = explode(',', $value);
                 return !in_array($productValue, $values);
+        }
+
+        return false;
+    }
+
+    /**
+     * Evaluate category condition specifically
+     *
+     * @param Product $product
+     * @param string $operator
+     * @param string $value
+     * @return bool
+     */
+    protected function evaluateCategoryCondition($product, $operator, $value)
+    {
+        $productCategoryIds = $product->getCategoryIds();
+        $conditionCategoryIds = explode(',', $value);
+
+        switch ($operator) {
+            case '==':
+                // Product must be in ALL specified categories
+                foreach ($conditionCategoryIds as $categoryId) {
+                    if (!in_array(trim($categoryId), $productCategoryIds)) {
+                        return false;
+                    }
+                }
+                return true;
+
+            case '!=':
+                // Product must NOT be in ANY of the specified categories
+                foreach ($conditionCategoryIds as $categoryId) {
+                    if (in_array(trim($categoryId), $productCategoryIds)) {
+                        return false;
+                    }
+                }
+                return true;
+
+            case '()':
+                // Product must be in at least ONE of the specified categories
+                foreach ($conditionCategoryIds as $categoryId) {
+                    if (in_array(trim($categoryId), $productCategoryIds)) {
+                        return true;
+                    }
+                }
+                return false;
+
+            case '!()':
+                // Product must NOT be in ANY of the specified categories
+                foreach ($conditionCategoryIds as $categoryId) {
+                    if (in_array(trim($categoryId), $productCategoryIds)) {
+                        return false;
+                    }
+                }
+                return true;
+
+            case '{}':
+                // Product categories contain the specified category
+                foreach ($conditionCategoryIds as $categoryId) {
+                    if (in_array(trim($categoryId), $productCategoryIds)) {
+                        return true;
+                    }
+                }
+                return false;
+
+            case '!{}':
+                // Product categories do NOT contain any of the specified categories
+                foreach ($conditionCategoryIds as $categoryId) {
+                    if (in_array(trim($categoryId), $productCategoryIds)) {
+                        return false;
+                    }
+                }
+                return true;
         }
 
         return false;
